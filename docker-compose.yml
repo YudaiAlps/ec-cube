@@ -15,6 +15,12 @@ volumes:
     driver: local
   node_modules:
     driver: local
+  mysql-database:
+    driver: local
+  filters:
+    driver: local
+  proxy-profiles:
+    driver: local
 
 services:
   ### ECCube4 ##################################
@@ -26,7 +32,7 @@ services:
         # ビルド時点でDBサーバの起動や接続が出来ない、という場合等にエラーとなるため。
         SKIP_INSTALL_SCRIPT_ON_DOCKER_BUILD: "true"
     ports:
-      - 8080:80
+      - 8081:80
       - 4430:443
     volumes:
       ### 同期対象からコストの重いフォルダを除外 #####################
@@ -37,10 +43,10 @@ services:
       # EC-CUBE environments
       APP_ENV: "dev"
       APP_DEBUG: 1
-      DATABASE_URL: "sqlite:///var/eccube.db"
+      DATABASE_URL: "mysql://dbuser:secret@mysql/eccubedb"
       DATABASE_SERVER_VERSION: 3
       MAILER_URL: "smtp://mailcatcher:1025"
-      ECCUBE_AUTH_MAGIC: "<change.me>"
+      ECCUBE_AUTH_MAGIC: "auth_magic"
       # ECCUBE_LOCALE: "ja"
       # ECCUBE_TIMEZONE: "Asia/Tokyo"
       # ECCUBE_CURRENCY: "JPY"
@@ -64,5 +70,20 @@ services:
     ports:
       - "1080:1080"
       - "1025:1025"
+    networks:
+      - backend
+
+  ### Mysql ##################################
+  mysql:
+    image: mariadb:10.2
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: eccubedb
+      MYSQL_USER: dbuser
+      MYSQL_PASSWORD: secret
+    volumes:
+      - mysql-database:/var/lib/mysql
+    ports:
+      - 13306:3306
     networks:
       - backend
